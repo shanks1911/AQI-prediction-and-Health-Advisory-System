@@ -1,0 +1,16 @@
+# Folders
+__pycache__/
+venv/
+*.py[cod]
+
+# .env files
+.env
+
+# images
+*.png
+
+# codefiles
+test.ipynb
+
+# csv files
+*.csv
