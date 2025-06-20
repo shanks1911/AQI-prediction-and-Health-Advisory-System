@@ -1,4 +1,11 @@
+import pandas as pd
+import numpy as np
+
 def calculate_aqi_pm25(pm25_value):
+    # Handle NaN or None values
+    if pd.isna(pm25_value) or pm25_value is None:
+        return None
+    
     breakpoints = [
         (0, 30, 0, 50),
         (31, 60, 51, 100),
@@ -14,6 +21,10 @@ def calculate_aqi_pm25(pm25_value):
     return None
 
 def calculate_aqi_pm10(pm10_value):
+    # Handle NaN or None values
+    if pd.isna(pm10_value) or pm10_value is None:
+        return None
+    
     breakpoints = [
         (0, 50, 0, 50),
         (51, 100, 51, 100),
@@ -29,6 +40,10 @@ def calculate_aqi_pm10(pm10_value):
     return None
 
 def calculate_aqi_co(co_value):
+    # Handle NaN or None values
+    if pd.isna(co_value) or co_value is None:
+        return None
+    
     co_mg_m3 = co_value / 1000
     breakpoints = [
         (0.0, 1.0,   0,  50),
@@ -45,6 +60,10 @@ def calculate_aqi_co(co_value):
     return None
 
 def calculate_aqi_no2(no2_value):
+    # Handle NaN or None values
+    if pd.isna(no2_value) or no2_value is None:
+        return None
+    
     breakpoints = [
         (0, 40, 0, 50),
         (41, 80, 51, 100),
@@ -61,6 +80,10 @@ def calculate_aqi_no2(no2_value):
     return None
 
 def calculate_aqi_so2(so2_value):
+    # Handle NaN or None values
+    if pd.isna(so2_value) or so2_value is None:
+        return None
+    
     breakpoints = [
         (0, 40, 0, 50),
         (41, 80, 51, 100),
@@ -77,6 +100,10 @@ def calculate_aqi_so2(so2_value):
     return None
 
 def calculate_aqi_o3(o3_value):
+    # Handle NaN or None values
+    if pd.isna(o3_value) or o3_value is None:
+        return None
+    
     breakpoints = [
         (0, 84, 0, 50),
         (84, 124, 51, 100),
@@ -93,6 +120,10 @@ def calculate_aqi_o3(o3_value):
     return None
 
 def calculate_aqi_nh3(nh3_value):
+    # Handle NaN or None values
+    if pd.isna(nh3_value) or nh3_value is None:
+        return None
+    
     breakpoints = [
         (0, 10, 0, 50),
         (11, 20, 51, 100),
@@ -107,21 +138,38 @@ def calculate_aqi_nh3(nh3_value):
             return int(((nh3_value - low) / (high - low)) * (high_aqi - low_aqi) + low_aqi)
     return None
 
-# Overall AQI calculation
+# Overall AQI calculation with improved error handling
 def calculate_overall_aqi(row):
-    # Calculate AQI for each pollutant
-    aqi_values = [
-        calculate_aqi_pm25(row['components.pm2_5']),
-        calculate_aqi_pm10(row['components.pm10']),
-        calculate_aqi_co(row['components.co']),
-        calculate_aqi_no2(row['components.no']),
-        calculate_aqi_so2(row['components.so2']),
-        calculate_aqi_o3(row['components.o3']),
-        calculate_aqi_nh3(row['components.nh3'])
-    ]
-    
-    # Filter out None values
-    aqi_values = [aqi for aqi in aqi_values if aqi is not None]
-    
-    # Return the maximum AQI value, or None if no valid AQI values
-    return max(aqi_values) if aqi_values else None
+    try:
+        # Safely extract values with fallback for missing columns
+        pm25_val = row.get('components.pm2_5', None) if hasattr(row, 'get') else getattr(row, 'components.pm2_5', None)
+        pm10_val = row.get('components.pm10', None) if hasattr(row, 'get') else getattr(row, 'components.pm10', None)
+        co_val = row.get('components.co', None) if hasattr(row, 'get') else getattr(row, 'components.co', None)
+        no2_val = row.get('components.no', None) if hasattr(row, 'get') else getattr(row, 'components.no', None)
+        so2_val = row.get('components.so2', None) if hasattr(row, 'get') else getattr(row, 'components.so2', None)
+        o3_val = row.get('components.o3', None) if hasattr(row, 'get') else getattr(row, 'components.o3', None)
+        nh3_val = row.get('components.nh3', None) if hasattr(row, 'get') else getattr(row, 'components.nh3', None)
+        
+        # Calculate AQI for each pollutant
+        aqi_values = [
+            calculate_aqi_pm25(pm25_val),
+            calculate_aqi_pm10(pm10_val),
+            calculate_aqi_co(co_val),
+            calculate_aqi_no2(no2_val),
+            calculate_aqi_so2(so2_val),
+            calculate_aqi_o3(o3_val),
+            calculate_aqi_nh3(nh3_val)
+        ]
+        
+        # Filter out None values
+        valid_aqi_values = [aqi for aqi in aqi_values if aqi is not None and not pd.isna(aqi)]
+        
+        # Return the maximum AQI value, or None if no valid AQI values
+        if valid_aqi_values:
+            return max(valid_aqi_values)
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"Error calculating AQI for row: {e}")
+        return None

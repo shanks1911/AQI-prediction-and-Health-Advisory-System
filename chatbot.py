@@ -9,7 +9,7 @@ load_dotenv()
 client = OpenAI(base_url="https://models.github.ai/inference",
                 api_key=os.getenv("OPENAI_o1_MINI_API_KEY"))  # or GITHUB_TOKEN if used
 
-def get_aqi_advice(forecasted_aqi, user_health_issues=None, current_aqi=None, city=None):
+def get_aqi_advice(forecasted_aqi = None, user_health_issues=None, current_aqi=None, city=None):
     """
     Get AQI-based health advice using OpenAI API
     
@@ -25,7 +25,7 @@ def get_aqi_advice(forecasted_aqi, user_health_issues=None, current_aqi=None, ci
     
     system_prompt = (
         "You are an expert air quality health advisor that provides practical, evidence-based advice "
-        "based on Air Quality Index (AQI) levels. Use guidelines from WHO, CDC, EPA, and CPCB. "
+        "based on Air Quality Index (AQI) levels. Use guidelines from WHO, CDC, EPA, and CPCB and other relevant sites giving proper sources. "
         "Provide clear, actionable recommendations for protecting health during different air quality conditions. "
         "Be supportive and informative when users share health concerns. "
         "Keep responses concise but comprehensive, focusing on practical steps people can take."
@@ -43,11 +43,26 @@ def get_aqi_advice(forecasted_aqi, user_health_issues=None, current_aqi=None, ci
         user_prompt += f"Current AQI: {current_aqi:.1f}\n"
     
     # Add forecast data
-    if forecasted_aqi:
-        avg_forecast = sum(forecasted_aqi) / len(forecasted_aqi)
-        max_forecast = max(forecasted_aqi)
-        min_forecast = min(forecasted_aqi)
-        user_prompt += f"7-day AQI forecast - Average: {avg_forecast:.1f}, Range: {min_forecast:.1f} to {max_forecast:.1f}\n"
+    # if forecasted_aqi:
+    #     avg_forecast = sum(forecasted_aqi) / len(forecasted_aqi)
+    #     max_forecast = max(forecasted_aqi)
+    #     min_forecast = min(forecasted_aqi)
+    #     user_prompt += f"7-day AQI forecast - Average: {avg_forecast:.1f}, Range: {min_forecast:.1f} to {max_forecast:.1f}\n"
+    if forecasted_aqi and len(forecasted_aqi) > 0:
+        try:
+            # Filter valid numeric values
+            valid_forecasts = [float(aqi) for aqi in forecasted_aqi 
+                             if aqi is not None and isinstance(aqi, (int, float, str)) 
+                             and str(aqi).replace('.', '').replace('-', '').isdigit()]
+            
+            if valid_forecasts:
+                avg_forecast = sum(valid_forecasts) / len(valid_forecasts)
+                max_forecast = max(valid_forecasts)
+                min_forecast = min(valid_forecasts)
+                user_prompt += f"7-day AQI forecast - Average: {avg_forecast:.1f}, Range: {min_forecast:.1f} to {max_forecast:.1f}\n"
+        except (ValueError, TypeError):
+            # Skip forecast data if there are validation issues
+            pass
     
     # Add user's question or health concerns
     if user_health_issues:
@@ -63,6 +78,11 @@ def get_aqi_advice(forecasted_aqi, user_health_issues=None, current_aqi=None, ci
             user_prompt += "Please answer their question in the context of the air quality data provided."
     else:
         user_prompt += "Please provide general health recommendations based on these air quality conditions."
+    
+    # Handle case where no data is provided
+    if not any([current_aqi, forecasted_aqi, city]):
+        user_prompt += "\nNote: No specific air quality data provided. Please give general air quality health advice."
+
 
     try:
         response = client.chat.completions.create(
