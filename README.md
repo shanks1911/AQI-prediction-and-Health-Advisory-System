@@ -1,6 +1,8 @@
 🌫️ AQI Prediction & Health Advisory System
 This project is a real-time Air Quality Index (AQI) Forecasting and Health Risk Advisory System that uses deep learning to predict hourly AQI levels for the next 7 days and provides personalized health precautions based on forecasted pollution levels and user health conditions.
 
+🌐 Site: https://aqi-prediction-and-health-advisory-system.streamlit.app/
+
 🔍 Features
 📈 7-Day Hourly AQI Forecast using an LSTM deep learning model
 
