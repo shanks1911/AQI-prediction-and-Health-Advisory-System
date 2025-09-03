@@ -18,3 +18,5 @@ test_app.py
 # csv files
 *.csv
 
+# devcontainer
+.devcontainer/
